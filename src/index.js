@@ -1,6 +1,6 @@
 const t = TrelloPowerUp.iframe();
 
-// Inicializa la Power-Up y añade botones en el tablero
+// Inicializa la Power-Up
 TrelloPowerUp.initialize({
     'board-buttons': function (t) {
         return [{
@@ -9,7 +9,7 @@ TrelloPowerUp.initialize({
             callback: function (t) {
                 return t.modal({
                     title: 'Lista de Tarjetas',
-                    url: 'table.html',
+                    url: 'https://amaiavg.github.io/trello-power-up-assignments/table.html',
                     fullscreen: true
                 });
             }
@@ -18,18 +18,8 @@ TrelloPowerUp.initialize({
     'show-settings': function (t) {
         return t.popup({
             title: 'Configuración',
-            url: 'settings.html',
+            url: 'https://amaiavg.github.io/trello-power-up-assignments/settings.html',
             height: 200
         });
     }
 });
-
-// Función para inicializar la tabla
-const init = () => {
-    t.render(() => {
-        renderTable();
-    });
-};
-
-// Llamar a la función de inicialización
-init();
