@@ -1,5 +1,7 @@
 const t = TrelloPowerUp.iframe();
 
+console.log("🚀 Power-Up de Trello se está ejecutando.");
+
 // Inicializa la Power-Up
 TrelloPowerUp.initialize({
     'board-buttons': function (t) {
