@@ -4,7 +4,6 @@ const t = TrelloPowerUp.iframe();
 TrelloPowerUp.initialize({
     'board-buttons': function (t) {
         return [{
-            icon: 'https://example.com/icon.png',
             text: 'Ver Tarjetas',
             callback: function (t) {
                 return t.modal({
