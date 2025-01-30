@@ -3,7 +3,7 @@
 console.log("🚀 Power-Up de Trello se está ejecutando.");
 
 const init = (t) => {
-    return t.get('board', 'shared', 'selectedUsers')
+    return TrelloPowerUp.iframe().get('board', 'shared', 'selectedUsers')
         .then(selectedUsers => {
             // Initialize dropdowns and table view
             const dropdownMenu = new DropdownMenu(t, selectedUsers);
