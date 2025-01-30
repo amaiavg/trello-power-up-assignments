@@ -1,5 +1,3 @@
-import TableView from './TableView';
-
 const t = TrelloPowerUp.iframe();
 
 const init = (t) => {
