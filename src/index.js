@@ -1,10 +1,10 @@
-const t = TrelloPowerUp.iframe();
+//const t = TrelloPowerUp.iframe();
 
 console.log("🚀 Power-Up de Trello se está ejecutando.");
 
 // Inicializa la Power-Up
-TrelloPowerUp.initialize({
-    'board-buttons': function (t) {
+window.TrelloPowerUp.initialize({
+    'board-buttons': function (t, opts) {
         console.log("✅ El botón de la Power-Up debería aparecer ahora...");
         return [{
             text: 'Ver Tarjetas',
@@ -17,12 +17,5 @@ TrelloPowerUp.initialize({
                 });
             }
         }];
-    },
-    'show-settings': function (t) {
-        return t.popup({
-            title: 'Configuración',
-            url: 'https://amaiavg.github.io/trello-power-up-assignments/settings.html',
-            height: 200
-        });
     }
 });
