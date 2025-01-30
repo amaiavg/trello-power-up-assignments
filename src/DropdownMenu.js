@@ -1,5 +1,3 @@
-import React, { Component } from 'react';
-
 class DropdownMenu extends Component {
     constructor(props) {
         super(props);

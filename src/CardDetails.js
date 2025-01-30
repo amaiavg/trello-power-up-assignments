@@ -1,5 +1,3 @@
-import React from 'react';
-
 const CardDetails = ({ cardId }) => {
     const openCard = () => {
         const url = `https://trello.com/c/${cardId}`;
