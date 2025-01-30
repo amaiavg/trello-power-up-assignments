@@ -4,12 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lista de Tarjetas</title>
+    <script src="https://unpkg.com/react/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom/umd/react-dom.development.js"></script>
     <script src="https://p.trellocdn.com/power-up.min.js"></script>
-    <script defer src="src/index.js"></script>
+    <script defer src="src/initialize.js"></script>
+    <script defer src="src/TableView.js"></script>
+    <script defer src="src/CardDetails.js"></script>
+    <script defer src="src/DropdownMenu.js"></script>
 </head>
 <body>
-    <h1>Lista de Tarjetas</h1>
-    <div id="dropdowns"></div>
-    <div id="table-container"></div>
+    <div id="app">
+        <h1>Trello Power-Up Table View</h1>
+        <div id="dropdowns">
+            <!-- Dropdowns for selecting users and lists will be rendered here -->
+        </div>
+        <div id="table-view">
+            <!-- Table view will be rendered here -->
+        </div>
+    </div>
 </body>
 </html>
