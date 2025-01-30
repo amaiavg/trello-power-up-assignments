@@ -1,4 +1,4 @@
-const t = TrelloPowerUp.iframe();
+//const t = TrelloPowerUp.iframe();
 
 console.log("🚀 Power-Up de Trello se está ejecutando.");
 
