@@ -16,18 +16,22 @@ const TableView = ({ data }) => {
                 </tr>
             </thead>
             <tbody>
-                {data.map((card) => (
-                    <tr key={card.shortId}>
-                        <td>{card.member}</td>
-                        <td>{card.list}</td>
-                        <td>{card.shortId}</td>
-                        <td>{card.name}</td>
-                        <td>{card.dueDate}</td>
-                        <td>{card.customFields.horasInvertidas}</td>
-                        <td>{card.customFields.horasEstimadas}</td>
-                        <td>{card.labels.join(', ')}</td>
-                    </tr>
-                ))}
+                    {data.map((card) => (
+                        <tr key={card.shortId}>
+                            <td>{card.member}</td>
+                            <td>{card.list}</td>
+                            <td>{card.shortId}</td>
+                            <td>
+                                <a href="#" onClick={() => CardDetails(card.id)}>
+                                    {card.name}
+                                </a>
+                            </td>
+                            <td>{card.dueDate}</td>
+                            <td>{card.customFields.horasInvertidas}</td>
+                            <td>{card.customFields.horasEstimadas}</td>
+                            <td>{card.labels.join(', ')}</td>
+                        </tr>
+                    ))}
             </tbody>
         </table>
     );
