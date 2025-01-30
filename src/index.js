@@ -49,4 +49,4 @@ window.TrelloPowerUp.initialize({
     }
 });
 
-init(t);
+init();
