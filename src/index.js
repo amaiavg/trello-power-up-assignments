@@ -12,7 +12,7 @@ window.TrelloPowerUp.initialize({
                 console.log("📌 Botón presionado, abriendo modal...");
                 return t.modal({
                     title: 'Lista de Tarjetas',
-                    url: 'https://amaiavg.github.io/trello-power-up-assignments/table.html',
+                    url: 'https://amaiavg.github.io/trello-power-up-assignments/src/TableView.js',
                     fullscreen: true
                 });
             }
