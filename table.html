@@ -4,16 +4,209 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lista de Tarjetas</title>
-    <!-- Carga de React y ReactDOM -->
+    <!-- React y ReactDOM -->
     <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
-    <!-- Babel -->
+    <!-- Babel para compilar JSX en el navegador -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- Trello Power-Up -->
     <script src="https://p.trellocdn.com/power-up.min.js"></script>
   </head>
   <body>
     <div id="app"></div>
-    <script type="text/babel" src="src/App.js"></script>
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+
+      const App = () => {
+        // Estados para tarjetas, miembros, listas y filtros
+        const [cards, setCards] = useState([]);
+        const [filteredCards, setFilteredCards] = useState([]);
+        const [members, setMembers] = useState([]);
+        const [lists, setLists] = useState([]);
+        const [selectedMember, setSelectedMember] = useState('');
+        const [selectedList, setSelectedList] = useState('');
+
+        const t = TrelloPowerUp.iframe();
+
+        // Recupera los miembros reales del tablero
+        const fetchMembers = async () => {
+          try {
+            const boardMembers = await t.board('members');
+            setMembers(boardMembers);
+          } catch (error) {
+            console.error("Error al obtener miembros:", error);
+          }
+        };
+
+        // Recupera las listas del tablero
+        const fetchLists = async () => {
+          try {
+            // t.lists('all') obtiene todas las listas del tablero
+            const boardLists = await t.lists('all');
+            setLists(boardLists);
+          } catch (error) {
+            console.error("Error al obtener listas:", error);
+          }
+        };
+
+        // Recupera las tarjetas del tablero
+        const fetchCards = async () => {
+          try {
+            const cardsData = await t.cards('all');
+            setCards(cardsData);
+            setFilteredCards(cardsData);
+          } catch (error) {
+            console.error("Error al obtener tarjetas:", error);
+          }
+        };
+
+        // Al montar el componente, recupera los miembros, listas y tarjetas
+        useEffect(() => {
+          fetchMembers();
+          fetchLists();
+          fetchCards();
+        }, []);
+
+        // Aplica los filtros cuando cambian los filtros o la data
+        useEffect(() => {
+          let filtered = cards;
+          if (selectedMember) {
+            // Cada tarjeta posee un array idMembers con los IDs de los miembros asignados
+            filtered = filtered.filter(card =>
+              card.idMembers && card.idMembers.includes(selectedMember)
+            );
+          }
+          if (selectedList) {
+            // Cada tarjeta tiene la propiedad idList con el ID de la lista a la que pertenece
+            filtered = filtered.filter(card => card.idList === selectedList);
+          }
+          setFilteredCards(filtered);
+        }, [selectedMember, selectedList, cards]);
+
+        // Abre el popup con la tarjeta. Se utiliza shortLink si está disponible.
+        const handleCardClick = (cardShortLink) => {
+          t.popup({
+            title: 'Detalles de la Tarjeta',
+            url: `https://trello.com/c/${cardShortLink}`,
+            height: 400
+          });
+        };
+
+        return (
+          <div>
+            <h1>Trello Power-Up Table View</h1>
+            <DropdownMenu 
+              members={members}
+              lists={lists}
+              onMemberSelect={setSelectedMember}
+              onListSelect={setSelectedList}
+            />
+            <TableView 
+              data={filteredCards} 
+              onCardClick={handleCardClick} 
+              members={members}
+              lists={lists}
+            />
+          </div>
+        );
+      };
+
+      // Componente para seleccionar filtros basados en los miembros y listas del tablero
+      const DropdownMenu = ({ members, lists, onMemberSelect, onListSelect }) => {
+        return (
+          <div style={{ marginBottom: '20px' }}>
+            <label>
+              Filtrar por miembro:
+              <select onChange={(e) => onMemberSelect(e.target.value)} defaultValue="">
+                <option value="">Todos</option>
+                {members.map(member => (
+                  <option key={member.id} value={member.id}>
+                    {member.fullName}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label style={{ marginLeft: '20px' }}>
+              Filtrar por lista:
+              <select onChange={(e) => onListSelect(e.target.value)} defaultValue="">
+                <option value="">Todas</option>
+                {lists.map(list => (
+                  <option key={list.id} value={list.id}>
+                    {list.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        );
+      };
+
+      // Componente que muestra la tabla con la información de las tarjetas
+      const TableView = ({ data, onCardClick, members, lists }) => {
+        // Función auxiliar para obtener los nombres de los miembros a partir de sus IDs
+        const getMemberNames = (memberIds) => {
+          if (!memberIds) return '';
+          return memberIds.map(id => {
+            const member = members.find(m => m.id === id);
+            return member ? member.fullName : id;
+          }).join(', ');
+        };
+
+        // Función auxiliar para obtener el nombre de la lista a partir de su ID
+        const getListName = (listId) => {
+          if (!listId) return '';
+          const list = lists.find(l => l.id === listId);
+          return list ? list.name : listId;
+        };
+
+        return (
+          <table border="1" cellPadding="5" style={{ borderCollapse: 'collapse', width: '100%' }}>
+            <thead>
+              <tr>
+                <th>Miembros</th>
+                <th>Lista</th>
+                <th>Short ID</th>
+                <th>Nombre</th>
+                <th>Due Date</th>
+                <th>Horas Invertidas</th>
+                <th>Horas Estimadas</th>
+                <th>Labels</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map(card => (
+                <tr key={card.id}>
+                  <td>{getMemberNames(card.idMembers)}</td>
+                  <td>{getListName(card.idList)}</td>
+                  <td>{card.idShort ? card.idShort : ''}</td>
+                  <td>
+                    <a href="#" onClick={(e) => {
+                      e.preventDefault();
+                      onCardClick(card.shortLink || card.id);
+                    }}>
+                      {card.name}
+                    </a>
+                  </td>
+                  <td>{card.due ? new Date(card.due).toLocaleDateString() : ''}</td>
+                  <td>
+                    {card.customFieldItems
+                      ? (card.customFieldItems.find(item => item.idCustomField === 'horasInvertidas')?.value?.number || '')
+                      : ''}
+                  </td>
+                  <td>
+                    {card.customFieldItems
+                      ? (card.customFieldItems.find(item => item.idCustomField === 'horasEstimadas')?.value?.number || '')
+                      : ''}
+                  </td>
+                  <td>{card.labels && card.labels.map(label => label.name).join(', ')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        );
+      };
+
+      ReactDOM.render(<App />, document.getElementById('app'));
+    </script>
   </body>
 </html>
