@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lista de Tarjetas</title>
-    <!-- React y ReactDOM -->
+    <!-- Carga de React y ReactDOM -->
     <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
     <!-- Babel para compilar JSX en el navegador -->
@@ -32,7 +32,15 @@
         const fetchMembers = async () => {
           try {
             const boardMembers = await t.board('members');
-            setMembers(boardMembers);
+            console.log("Miembros obtenidos:", boardMembers);
+            let membersArray = [];
+            if (Array.isArray(boardMembers)) {
+              membersArray = boardMembers;
+            } else if (boardMembers && typeof boardMembers === 'object') {
+              // Si viene como objeto, convertimos sus valores a un array
+              membersArray = Object.values(boardMembers);
+            }
+            setMembers(membersArray);
           } catch (error) {
             console.error("Error al obtener miembros:", error);
           }
@@ -41,8 +49,8 @@
         // Recupera las listas del tablero
         const fetchLists = async () => {
           try {
-            // t.lists('all') obtiene todas las listas del tablero
             const boardLists = await t.lists('all');
+            console.log("Listas obtenidas:", boardLists);
             setLists(boardLists);
           } catch (error) {
             console.error("Error al obtener listas:", error);
@@ -53,6 +61,7 @@
         const fetchCards = async () => {
           try {
             const cardsData = await t.cards('all');
+            console.log("Tarjetas obtenidas:", cardsData);
             setCards(cardsData);
             setFilteredCards(cardsData);
           } catch (error) {
@@ -60,7 +69,7 @@
           }
         };
 
-        // Al montar el componente, recupera los miembros, listas y tarjetas
+        // Al montar el componente, se obtienen los datos
         useEffect(() => {
           fetchMembers();
           fetchLists();
@@ -71,19 +80,19 @@
         useEffect(() => {
           let filtered = cards;
           if (selectedMember) {
-            // Cada tarjeta posee un array idMembers con los IDs de los miembros asignados
+            // Cada tarjeta tiene un array idMembers con los IDs de los miembros asignados
             filtered = filtered.filter(card =>
               card.idMembers && card.idMembers.includes(selectedMember)
             );
           }
           if (selectedList) {
-            // Cada tarjeta tiene la propiedad idList con el ID de la lista a la que pertenece
+            // Cada tarjeta tiene la propiedad idList con el ID de la lista
             filtered = filtered.filter(card => card.idList === selectedList);
           }
           setFilteredCards(filtered);
         }, [selectedMember, selectedList, cards]);
 
-        // Abre el popup con la tarjeta. Se utiliza shortLink si está disponible.
+        // Abre el popup de la tarjeta usando shortLink si está disponible
         const handleCardClick = (cardShortLink) => {
           t.popup({
             title: 'Detalles de la Tarjeta',
@@ -111,7 +120,7 @@
         );
       };
 
-      // Componente para seleccionar filtros basados en los miembros y listas del tablero
+      // Dropdown que permite filtrar por miembro y lista usando datos reales del tablero
       const DropdownMenu = ({ members, lists, onMemberSelect, onListSelect }) => {
         return (
           <div style={{ marginBottom: '20px' }}>
@@ -141,7 +150,7 @@
         );
       };
 
-      // Componente que muestra la tabla con la información de las tarjetas
+      // Tabla que muestra la información de las tarjetas
       const TableView = ({ data, onCardClick, members, lists }) => {
         // Función auxiliar para obtener los nombres de los miembros a partir de sus IDs
         const getMemberNames = (memberIds) => {
