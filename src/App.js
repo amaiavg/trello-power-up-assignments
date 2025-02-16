@@ -110,7 +110,7 @@ const App = () => {
 
   return (
     <div>
-      <h1>Trello Power-Up Table View</h1>
+      <h1>Trello Power-Up Table View1</h1>
       <DropdownMenu 
         onUserSelect={setSelectedUser} 
         onListSelect={setSelectedList} 
