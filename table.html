@@ -1,26 +1,23 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lista de Tarjetas</title>
-    <script src="https://unpkg.com/react/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom/umd/react-dom.development.js"></script>
+    <!-- Carga de React y ReactDOM -->
+    <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+    <!-- Babel para transpilar JSX en el navegador -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Trello Power-Up -->
     <script src="https://p.trellocdn.com/power-up.min.js"></script>
-    <script defer src="src/initialize.js"></script>
-    <script defer src="src/TableView.js"></script>
-    <script defer src="src/CardDetails.js"></script>
-    <script defer src="src/DropdownMenu.js"></script>
-</head>
-<body>
-    <div id="app">
-        <h1>Trello Power-Up Table View</h1>
-        <div id="dropdowns">
-            <!-- Dropdowns for selecting users and lists will be rendered here -->
-        </div>
-        <div id="table-view">
-            <!-- Table view will be rendered here -->
-        </div>
-    </div>
-</body>
+  </head>
+  <body>
+    <div id="app"></div>
+    <!-- Cargamos nuestros componentes (asegúrate de mantener el orden para que App.js se ejecute primero) -->
+    <script type="text/babel" src="src/App.js"></script>
+    <script type="text/babel" src="src/TableView.js"></script>
+    <script type="text/babel" src="src/DropdownMenu.js"></script>
+    <script type="text/babel" src="src/CardDetails.js"></script>
+  </body>
 </html>

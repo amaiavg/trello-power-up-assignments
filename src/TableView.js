@@ -8,8 +8,6 @@ const TableView = ({ data }) => {
                     <th>Short ID</th>
                     <th>Nombre</th>
                     <th>Due Date</th>
-                    <th>Horas Invertidas</th>
-                    <th>Horas Estimadas</th>
                     <th>Labels</th>
                 </tr>
             </thead>
@@ -25,8 +23,6 @@ const TableView = ({ data }) => {
                                 </a>
                             </td>
                             <td>{card.dueDate}</td>
-                            <td>{card.customFields.horasInvertidas}</td>
-                            <td>{card.customFields.horasEstimadas}</td>
                             <td>{card.labels.join(', ')}</td>
                         </tr>
                     ))}
