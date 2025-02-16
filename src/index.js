@@ -9,7 +9,7 @@ window.TrelloPowerUp.initialize({
             // Usamos una URL relativa para GitHub Pages; asegúrate de que table.html esté en la raíz
             return t.modal({
               title: 'Asignaciones',
-              url: '/table.html',
+              url: 'https://amaiavg.github.io/trello-power-up-assignments/table.html',
               fullscreen: true
             });
           }
