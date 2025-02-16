@@ -14,10 +14,11 @@
   </head>
   <body>
     <div id="app"></div>
-    <!-- Cargamos nuestros componentes (asegúrate de mantener el orden para que App.js se ejecute primero) -->
-    <script type="text/babel" src="src/App.js"></script>
-    <script type="text/babel" src="src/TableView.js"></script>
+    <!-- Primero cargamos los componentes -->
     <script type="text/babel" src="src/DropdownMenu.js"></script>
+    <script type="text/babel" src="src/TableView.js"></script>
     <script type="text/babel" src="src/CardDetails.js"></script>
+    <!-- Por último, cargamos el componente principal -->
+    <script type="text/babel" src="src/App.js"></script>
   </body>
 </html>
