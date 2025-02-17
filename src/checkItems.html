@@ -23,119 +23,151 @@
       const { useState, useEffect } = React;
 
       const App = () => {
-        const [checkItemsData, setCheckItemsData] = useState([]);
+        const [checkItems, setCheckItems] = useState([]);
+        const [cards, setCards] = useState([]);
+        const [lists, setLists] = useState([]);
+        const [members, setMembers] = useState([]);
         const [loading, setLoading] = useState(true);
+
         const t = TrelloPowerUp.iframe();
 
-        // Helper: dada una lista de listas y un id, devuelve el nombre de la lista
-        const getListName = (listId, lists) => {
+        // Función para obtener miembros del board
+        const fetchMembers = async () => {
+          try {
+            const boardMembers = await t.board('members');
+            console.log("Miembros obtenidos:", boardMembers);
+            let arr = [];
+            if (Array.isArray(boardMembers)) {
+              arr = boardMembers;
+            } else if (boardMembers && typeof boardMembers === 'object') {
+              arr = Object.values(boardMembers);
+            }
+            setMembers(arr);
+          } catch (error) {
+            console.error("Error al obtener miembros:", error);
+          }
+        };
+
+        // Función para obtener listas del board
+        const fetchLists = async () => {
+          try {
+            const boardLists = await t.lists('all');
+            console.log("Listas obtenidas:", boardLists);
+            setLists(boardLists);
+          } catch (error) {
+            console.error("Error al obtener listas:", error);
+          }
+        };
+
+        // Función para obtener tarjetas del board
+        const fetchCards = async () => {
+          try {
+            const cardsData = await t.cards('all');
+            console.log("Tarjetas obtenidas:", cardsData);
+            setCards(cardsData);
+            return cardsData;
+          } catch (error) {
+            console.error("Error al obtener tarjetas:", error);
+            return [];
+          }
+        };
+
+        // Helper: dado el id de una lista y el array de listas, devuelve el nombre de la lista
+        const getListName = (listId) => {
           const found = lists.find(l => l.id === listId);
           return found ? found.name : '';
         };
 
-        useEffect(() => {
-          // Recuperamos los datos del board que fueron pasados en args
-          const boardData = t.arg('board');
-          if (!boardData) {
-            console.error("No se recibieron datos del board.");
-            setLoading(false);
-            return;
+        // Función para obtener los checklists de una tarjeta
+        const fetchChecklistsForCard = async (card) => {
+          const url = `https://api.trello.com/1/cards/${card.id}/checklists?checkItem_fields=all`;
+          try {
+            const checklists = await t.signRequest({ url });
+            console.log("Carta:", card.name, "Checklists:", checklists);
+            return { ...card, checklists };
+          } catch (error) {
+            console.error("Error obteniendo checklists para la carta", card.name, error);
+            return { ...card, checklists: [] };
           }
-          const { cards, lists, name: boardName } = boardData;
-          console.log("Datos del Board recibidos en el modal:", boardData);
+        };
 
-          // Para cada tarjeta, obtenemos sus checklists usando ?checkItem_fields=all
-          const checklistPromises = cards.map(card => {
-            const url = `https://api.trello.com/1/cards/${card.id}/checklists?checkItem_fields=all`;
-            return t.signRequest({ url })
-              .then(checklists => {
-                console.log("Carta:", card.name, "Checklists:", checklists);
-                return { ...card, checklists };
-              })
-              .catch(err => {
-                console.error("Error obteniendo checklists para la carta", card.name, err);
-                return { ...card, checklists: [] };
-              });
-          });
-
-          Promise.all(checklistPromises)
-            .then(cardsWithChecklists => {
-              let items = [];
+        useEffect(() => {
+          // Primero se obtienen miembros, listas y tarjetas
+          Promise.all([fetchMembers(), fetchLists(), fetchCards()])
+            .then(async ([, , cardsData]) => {
+              // Para cada tarjeta, obtener sus checklists
+              const cardsWithChecklists = await Promise.all(
+                cardsData.map(fetchChecklistsForCard)
+              );
+              // Extraer checkitems de cada checklists
+              let extractedCheckItems = [];
               cardsWithChecklists.forEach(card => {
                 if (card.checklists && card.checklists.length > 0) {
                   card.checklists.forEach(checklist => {
-                    if (
-                      checklist.checkItems &&
-                      Array.isArray(checklist.checkItems) &&
-                      checklist.checkItems.length > 0
-                    ) {
+                    if (checklist.checkItems && Array.isArray(checklist.checkItems) && checklist.checkItems.length > 0) {
                       checklist.checkItems.forEach(item => {
-                        items.push({
+                        extractedCheckItems.push({
                           checklist: checklist.name,
                           name: item.name,
                           due: item.due ? item.due : "",
                           assignee: item.idMember ? item.idMember : "",
                           card: card.name,
-                          list: getListName(card.idList, lists),
-                          board: boardName
+                          list: getListName(card.idList),
+                          // Puedes agregar más campos si lo necesitas, por ejemplo board (si lo obtienes mediante t.board('name'))
                         });
                       });
                     }
                   });
                 }
               });
-              console.log("CheckItems extraídos:", items);
-              setCheckItemsData(items);
-              setLoading(false);
-            })
-            .catch(err => {
-              console.error("Error procesando las tarjetas:", err);
+              console.log("CheckItems extraídos:", extractedCheckItems);
+              setCheckItems(extractedCheckItems);
               setLoading(false);
             });
         }, []);
 
         // Función para ordenar la tabla por una columna
         const handleSort = (column) => {
-          const sortedData = [...checkItemsData].sort((a, b) => {
-            const aValue = a[column] ? a[column].toString().toLowerCase() : '';
-            const bValue = b[column] ? b[column].toString().toLowerCase() : '';
-            return aValue.localeCompare(bValue);
+          const sorted = [...checkItems].sort((a, b) => {
+            const aVal = a[column] ? a[column].toString().toLowerCase() : '';
+            const bVal = b[column] ? b[column].toString().toLowerCase() : '';
+            return aVal.localeCompare(bVal);
           });
-          setCheckItemsData(sortedData);
+          setCheckItems(sorted);
         };
 
         return (
           <div>
             <h1>Lista de CheckItems</h1>
-            {loading ? <p>Cargando datos...</p> : (
-              checkItemsData.length === 0 ? <p>No se encontraron checkitems.</p> : (
-                <table>
-                  <thead>
-                    <tr>
-                      <th onClick={() => handleSort('checklist')}>Checklist</th>
-                      <th onClick={() => handleSort('name')}>Name</th>
-                      <th onClick={() => handleSort('due')}>Due</th>
-                      <th onClick={() => handleSort('assignee')}>Assignee</th>
-                      <th onClick={() => handleSort('card')}>Card</th>
-                      <th onClick={() => handleSort('list')}>List</th>
-                      <th onClick={() => handleSort('board')}>Board</th>
+            {loading ? (
+              <p>Cargando datos...</p>
+            ) : checkItems.length === 0 ? (
+              <p>No se encontraron checkitems.</p>
+            ) : (
+              <table>
+                <thead>
+                  <tr>
+                    <th onClick={() => handleSort('checklist')}>Checklist</th>
+                    <th onClick={() => handleSort('name')}>Name</th>
+                    <th onClick={() => handleSort('due')}>Due</th>
+                    <th onClick={() => handleSort('assignee')}>Assignee</th>
+                    <th onClick={() => handleSort('card')}>Card</th>
+                    <th onClick={() => handleSort('list')}>List</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {checkItems.map((item, index) => (
+                    <tr key={index}>
+                      <td>{item.checklist}</td>
+                      <td>{item.name}</td>
+                      <td>{item.due}</td>
+                      <td>{item.assignee}</td>
+                      <td>{item.card}</td>
+                      <td>{item.list}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {checkItemsData.map((item, index) => (
-                      <tr key={index}>
-                        <td>{item.checklist}</td>
-                        <td>{item.name}</td>
-                        <td>{item.due}</td>
-                        <td>{item.assignee}</td>
-                        <td>{item.card}</td>
-                        <td>{item.list}</td>
-                        <td>{item.board}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )
+                  ))}
+                </tbody>
+              </table>
             )}
           </div>
         );
