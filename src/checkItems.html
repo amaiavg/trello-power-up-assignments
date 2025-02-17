@@ -79,20 +79,29 @@
         }
       }
       
-      // Helper: dada una lista de listas y un id, devuelve el nombre de la lista
+      // Helper: dado el id de una lista y el array de listas, devuelve el nombre de la lista
       function getListName(listId, lists) {
         for (var i = 0; i < lists.length; i++) {
-          if(lists[i].id === listId) {
+          if (lists[i].id === listId) {
             return lists[i].name;
           }
         }
         return "";
       }
       
-      // Función para renderizar la tabla a partir de un array de datos
+      // Función para renderizar la tabla a partir del array de datos
       function renderTable(data) {
         var tbody = document.querySelector('#checkitems-table tbody');
         tbody.innerHTML = "";
+        if(data.length === 0) {
+          var tr = document.createElement('tr');
+          var td = document.createElement('td');
+          td.colSpan = 7;
+          td.textContent = "No se encontraron checkitems.";
+          tr.appendChild(td);
+          tbody.appendChild(tr);
+          return;
+        }
         data.forEach(function(item){
           var tr = document.createElement('tr');
           ['checklist','name','due','assignee','card','list','board'].forEach(function(key){
@@ -104,51 +113,61 @@
         });
       }
       
-      // Función principal para obtener datos reales del board
-      TrelloPowerUp.render(function(t){
-        // Obtenemos datos del board: cartas, listas y nombre del board
-        return t.board('cards', 'lists', 'name').then(function(boardData){
-          var cards = boardData.cards;
-          var lists = boardData.lists;
-          var boardName = boardData.name;
-          
-          // Para cada carta, obtenemos sus checklists usando la API de Trello
-          var checklistPromises = cards.map(function(card){
-            var url = 'https://api.trello.com/1/cards/' + card.id + '/checklists';
-            return t.signRequest({ url: url }).then(function(checklists){
-               card.checklists = checklists;
-               return card;
+      // Función principal para obtener los datos reales del board
+      TrelloPowerUp.render(function(t) {
+        // Obtenemos datos del board: cartas, listas y nombre
+        return t.board('cards', 'lists', 'name')
+          .then(function(boardData) {
+            console.log("Datos del Board:", boardData);
+            var cards = boardData.cards;
+            var lists = boardData.lists;
+            var boardName = boardData.name;
+            
+            // Para cada carta, obtenemos sus checklists
+            var checklistPromises = cards.map(function(card) {
+              var url = 'https://api.trello.com/1/cards/' + card.id + '/checklists';
+              return t.signRequest({ url: url })
+                .then(function(checklists) {
+                  console.log("Carta:", card.name, "Checklists:", checklists);
+                  card.checklists = checklists;
+                  return card;
+                })
+                .catch(function(error) {
+                  console.error("Error obteniendo checklists para la carta " + card.name, error);
+                  card.checklists = [];
+                  return card;
+                });
             });
-          });
-          
-          return Promise.all(checklistPromises).then(function(cardsWithChecklists){
-            var data = [];
-            // Recorremos cada carta y sus checklists para extraer los checkitems
-            cardsWithChecklists.forEach(function(card){
-              if (card.checklists && card.checklists.length > 0) {
-                card.checklists.forEach(function(checklist){
-                  if(checklist.checkItems && checklist.checkItems.length > 0) {
-                    checklist.checkItems.forEach(function(item){
-                      data.push({
-                        checklist: checklist.name,
-                        name: item.name,
-                        // Aquí usamos el campo "due" del checkitem (si existe)
-                        due: item.due ? item.due : "",
-                        // Y el "assignee" es el idMember del checkitem
-                        assignee: item.idMember ? item.idMember : "",
-                        card: card.name,
-                        list: getListName(card.idList, lists),
-                        board: boardName
-                      });
+            
+            return Promise.all(checklistPromises)
+              .then(function(cardsWithChecklists) {
+                var data = [];
+                cardsWithChecklists.forEach(function(card) {
+                  if(card.checklists && card.checklists.length > 0) {
+                    card.checklists.forEach(function(checklist) {
+                      if(checklist.checkItems && checklist.checkItems.length > 0) {
+                        checklist.checkItems.forEach(function(item) {
+                          data.push({
+                            checklist: checklist.name,
+                            name: item.name,
+                            due: item.due ? item.due : "",
+                            assignee: item.idMember ? item.idMember : "",
+                            card: card.name,
+                            list: getListName(card.idList, lists),
+                            board: boardName
+                          });
+                        });
+                      }
                     });
                   }
                 });
-              }
-            });
-            // Renderizamos la tabla con los datos reales
-            renderTable(data);
+                console.log("Datos extraídos:", data);
+                renderTable(data);
+              });
+          })
+          .catch(function(error) {
+            console.error("Error obteniendo datos del board:", error);
           });
-        });
       });
     </script>
   </body>
