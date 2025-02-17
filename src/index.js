@@ -1,20 +1,25 @@
 window.TrelloPowerUp.initialize({
-    'board-buttons': function (t, opts) {
-      console.log("✅ El botón de la Power-Up debería aparecer ahora...");
-      return [
-        {
-          text: 'CheckItems3',
-          callback: function (t) {
-            console.log("📌 Botón presionado, abriendo modal...");
-            // Usamos una URL relativa para GitHub Pages; asegúrate de que table.html esté en la raíz
-            return t.modal({
-              title: 'CheckItems3',
-              url: 'https://amaiavg.github.io/trello-power-up-assignments/src/checkItems.html',
-              fullscreen: true
+  'board-buttons': function (t, opts) {
+    console.log("✅ El botón de la Power-Up debería aparecer ahora...");
+    return [
+      {
+        text: 'CheckItems4',
+        callback: function (t) {
+          console.log("📌 Botón presionado, obteniendo datos del board...");
+          // Obtenemos los datos del board (tarjetas, listas y nombre)
+          return t.board('cards', 'lists', 'name')
+            .then(boardData => {
+              console.log("Datos del board obtenidos:", boardData);
+              // Abrimos el modal y pasamos boardData en args
+              return t.modal({
+                title: 'CheckItems4',
+                url: 'https://amaiavg.github.io/trello-power-up-assignments/src/checkItems.html',
+                fullscreen: true,
+                args: { board: boardData }
+              });
             });
-          }
         }
-      ];
-    }
-  });
-  
+      }
+    ];
+  }
+});

@@ -25,8 +25,6 @@
       const App = () => {
         const [checkItemsData, setCheckItemsData] = useState([]);
         const [loading, setLoading] = useState(true);
-
-        // Obtenemos el objeto t del Power-Up
         const t = TrelloPowerUp.iframe();
 
         // Helper: dada una lista de listas y un id, devuelve el nombre de la lista
@@ -36,54 +34,61 @@
         };
 
         useEffect(() => {
-          // Obtenemos datos del board: cartas, listas y nombre del board
-          t.board('cards', 'lists', 'name')
-            .then(boardData => {
-              const { cards, lists, name: boardName } = boardData;
-              console.log("Datos del Board:", boardData);
-              // Para cada carta, obtenemos sus checklists usando checkItem_fields=all
-              const checklistPromises = cards.map(card => {
-                const url = `https://api.trello.com/1/cards/${card.id}/checklists?checkItem_fields=all`;
-                return t.signRequest({ url })
-                  .then(checklists => {
-                    console.log("Carta:", card.name, "Checklists:", checklists);
-                    return { ...card, checklists };
-                  })
-                  .catch(err => {
-                    console.error("Error obteniendo checklists para la carta", card.name, err);
-                    return { ...card, checklists: [] };
-                  });
+          // Recuperamos los datos del board que fueron pasados en args
+          const boardData = t.arg('board');
+          if (!boardData) {
+            console.error("No se recibieron datos del board.");
+            setLoading(false);
+            return;
+          }
+          const { cards, lists, name: boardName } = boardData;
+          console.log("Datos del Board recibidos en el modal:", boardData);
+
+          // Para cada tarjeta, obtenemos sus checklists usando checkItem_fields=all
+          const checklistPromises = cards.map(card => {
+            const url = `https://api.trello.com/1/cards/${card.id}/checklists?checkItem_fields=all`;
+            return t.signRequest({ url })
+              .then(checklists => {
+                console.log("Carta:", card.name, "Checklists:", checklists);
+                return { ...card, checklists };
+              })
+              .catch(err => {
+                console.error("Error obteniendo checklists para la carta", card.name, err);
+                return { ...card, checklists: [] };
               });
-              return Promise.all(checklistPromises)
-                .then(cardsWithChecklists => {
-                  let items = [];
-                  cardsWithChecklists.forEach(card => {
-                    if(card.checklists && card.checklists.length > 0) {
-                      card.checklists.forEach(checklist => {
-                        // Verificamos si checklist.checkItems existe y es un array
-                        if(checklist.checkItems && Array.isArray(checklist.checkItems) && checklist.checkItems.length > 0) {
-                          checklist.checkItems.forEach(item => {
-                            items.push({
-                              checklist: checklist.name,
-                              name: item.name,
-                              due: item.due ? item.due : "",
-                              assignee: item.idMember ? item.idMember : "",
-                              card: card.name,
-                              list: getListName(card.idList, lists),
-                              board: boardName
-                            });
-                          });
-                        }
+          });
+          Promise.all(checklistPromises)
+            .then(cardsWithChecklists => {
+              let items = [];
+              cardsWithChecklists.forEach(card => {
+                if (card.checklists && card.checklists.length > 0) {
+                  card.checklists.forEach(checklist => {
+                    if (
+                      checklist.checkItems &&
+                      Array.isArray(checklist.checkItems) &&
+                      checklist.checkItems.length > 0
+                    ) {
+                      checklist.checkItems.forEach(item => {
+                        items.push({
+                          checklist: checklist.name,
+                          name: item.name,
+                          due: item.due ? item.due : "",
+                          assignee: item.idMember ? item.idMember : "",
+                          card: card.name,
+                          list: getListName(card.idList, lists),
+                          board: boardName
+                        });
                       });
                     }
                   });
-                  console.log("CheckItems extraídos:", items);
-                  setCheckItemsData(items);
-                  setLoading(false);
-                });
+                }
+              });
+              console.log("CheckItems extraídos:", items);
+              setCheckItemsData(items);
+              setLoading(false);
             })
             .catch(err => {
-              console.error("Error obteniendo datos del board:", err);
+              console.error("Error procesando las tarjetas:", err);
               setLoading(false);
             });
         }, []);
