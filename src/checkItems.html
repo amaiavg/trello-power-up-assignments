@@ -44,7 +44,7 @@
           const { cards, lists, name: boardName } = boardData;
           console.log("Datos del Board recibidos en el modal:", boardData);
 
-          // Para cada tarjeta, obtenemos sus checklists usando checkItem_fields=all
+          // Para cada tarjeta, obtenemos sus checklists usando ?checkItem_fields=all
           const checklistPromises = cards.map(card => {
             const url = `https://api.trello.com/1/cards/${card.id}/checklists?checkItem_fields=all`;
             return t.signRequest({ url })
@@ -57,6 +57,7 @@
                 return { ...card, checklists: [] };
               });
           });
+
           Promise.all(checklistPromises)
             .then(cardsWithChecklists => {
               let items = [];
