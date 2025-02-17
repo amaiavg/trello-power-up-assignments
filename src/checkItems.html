@@ -78,13 +78,15 @@
           return found ? found.name : '';
         };
 
-        // Función para obtener los checklists de una tarjeta usando t.request
+        // Función para obtener los checklists de una tarjeta usando t.signRequest + fetch
         const fetchChecklistsForCard = async (card) => {
-          // Construimos la URL con el query string en ella
           const url = `https://api.trello.com/1/cards/${card.id}/checklists?checkItem_fields=all`;
           try {
-            // Llamamos a t.request pasando solo la URL (esto hace una petición GET)
-            const checklists = await t.request(url);
+            // Obtenemos la URL firmada
+            const signedUrl = await t.signRequest({ url });
+            // Usamos fetch para obtener la respuesta JSON
+            const response = await fetch(signedUrl);
+            const checklists = await response.json();
             console.log("Carta:", card.name, "Checklists:", checklists);
             return { ...card, checklists };
           } catch (error) {
