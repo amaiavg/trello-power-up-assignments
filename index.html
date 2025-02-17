@@ -28,10 +28,9 @@
             icon: 'https://image.url/icon.png',
             text: 'Check Items',
             callback: function(t) {
-              return t.popup({
-                title: 'Check Items',
+              return t.modal({
+                title: 'Check Items1',
                 url: 'https://amaiavg.github.io/trello-power-up-assignments/src/checkItems.html', // Esta es la página que generará la vista
-                height: 500,
                 fullscreen: true
               });
             }
