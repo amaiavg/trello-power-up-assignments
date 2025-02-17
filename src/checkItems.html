@@ -1,0 +1,155 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Check Items</title>
+    <script src="https://p.trellocdn.com/power-up.min.js"></script>
+    <style>
+      body { font-family: sans-serif; margin: 0.5em; }
+      #member-filters { margin-bottom: 1em; }
+      #member-filters img {
+        cursor: pointer;
+        border: 2px solid transparent;
+        border-radius: 50%;
+        margin-right: 4px;
+        width: 32px;
+        height: 32px;
+      }
+      #member-filters img.active { border-color: #0052cc; }
+      table { border-collapse: collapse; width: 100%; }
+      th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+      th { cursor: pointer; background: #f0f0f0; }
+    </style>
+  </head>
+  <body>
+    <div id="member-filters">
+      <!-- Aquí se agregarán los avatares de los miembros para filtrar -->
+    </div>
+    <table id="checkitems-table">
+      <thead>
+        <tr>
+          <th onclick="sortTable(0)">Checklist</th>
+          <th onclick="sortTable(1)">Name</th>
+          <th onclick="sortTable(2)">Due</th>
+          <th onclick="sortTable(3)">Assignee</th>
+          <th onclick="sortTable(4)">Card</th>
+          <th onclick="sortTable(5)">List</th>
+          <th onclick="sortTable(6)">Board</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Se llenará dinámicamente con datos reales -->
+      </tbody>
+    </table>
+    
+    <script>
+      // Función para ordenar la tabla
+      function sortTable(n) {
+        var table = document.getElementById("checkitems-table");
+        var rows, switching = true, i, x, y, shouldSwitch, dir = "asc", switchcount = 0;
+        while (switching) {
+          switching = false;
+          rows = table.rows;
+          for (i = 1; i < (rows.length - 1); i++) {
+            shouldSwitch = false;
+            x = rows[i].getElementsByTagName("TD")[n];
+            y = rows[i + 1].getElementsByTagName("TD")[n];
+            if (dir === "asc") {
+              if (x.textContent.toLowerCase() > y.textContent.toLowerCase()) {
+                shouldSwitch = true;
+                break;
+              }
+            } else {
+              if (x.textContent.toLowerCase() < y.textContent.toLowerCase()) {
+                shouldSwitch = true;
+                break;
+              }
+            }
+          }
+          if (shouldSwitch) {
+            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+            switching = true;
+            switchcount++;
+          } else {
+            if (switchcount === 0 && dir === "asc") {
+              dir = "desc";
+              switching = true;
+            }
+          }
+        }
+      }
+      
+      // Helper: dada una lista de listas y un id, devuelve el nombre de la lista
+      function getListName(listId, lists) {
+        for (var i = 0; i < lists.length; i++) {
+          if(lists[i].id === listId) {
+            return lists[i].name;
+          }
+        }
+        return "";
+      }
+      
+      // Función para renderizar la tabla a partir de un array de datos
+      function renderTable(data) {
+        var tbody = document.querySelector('#checkitems-table tbody');
+        tbody.innerHTML = "";
+        data.forEach(function(item){
+          var tr = document.createElement('tr');
+          ['checklist','name','due','assignee','card','list','board'].forEach(function(key){
+             var td = document.createElement('td');
+             td.textContent = item[key];
+             tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+      }
+      
+      // Función principal para obtener datos reales del board
+      TrelloPowerUp.render(function(t){
+        // Obtenemos datos del board: cartas, listas y nombre del board
+        return t.board('cards', 'lists', 'name').then(function(boardData){
+          var cards = boardData.cards;
+          var lists = boardData.lists;
+          var boardName = boardData.name;
+          
+          // Para cada carta, obtenemos sus checklists usando la API de Trello
+          var checklistPromises = cards.map(function(card){
+            var url = 'https://api.trello.com/1/cards/' + card.id + '/checklists';
+            return t.signRequest({ url: url }).then(function(checklists){
+               card.checklists = checklists;
+               return card;
+            });
+          });
+          
+          return Promise.all(checklistPromises).then(function(cardsWithChecklists){
+            var data = [];
+            // Recorremos cada carta y sus checklists para extraer los checkitems
+            cardsWithChecklists.forEach(function(card){
+              if (card.checklists && card.checklists.length > 0) {
+                card.checklists.forEach(function(checklist){
+                  if(checklist.checkItems && checklist.checkItems.length > 0) {
+                    checklist.checkItems.forEach(function(item){
+                      data.push({
+                        checklist: checklist.name,
+                        name: item.name,
+                        // Aquí usamos el campo "due" del checkitem (si existe)
+                        due: item.due ? item.due : "",
+                        // Y el "assignee" es el idMember del checkitem
+                        assignee: item.idMember ? item.idMember : "",
+                        card: card.name,
+                        list: getListName(card.idList, lists),
+                        board: boardName
+                      });
+                    });
+                  }
+                });
+              }
+            });
+            // Renderizamos la tabla con los datos reales
+            renderTable(data);
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
