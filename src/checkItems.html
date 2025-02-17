@@ -41,9 +41,9 @@
             .then(boardData => {
               const { cards, lists, name: boardName } = boardData;
               console.log("Datos del Board:", boardData);
-              // Para cada carta, obtenemos sus checklists
+              // Para cada carta, obtenemos sus checklists usando checkItem_fields=all
               const checklistPromises = cards.map(card => {
-                const url = `https://api.trello.com/1/cards/${card.id}/checklists`;
+                const url = `https://api.trello.com/1/cards/${card.id}/checklists?checkItem_fields=all`;
                 return t.signRequest({ url })
                   .then(checklists => {
                     console.log("Carta:", card.name, "Checklists:", checklists);
@@ -58,9 +58,10 @@
                 .then(cardsWithChecklists => {
                   let items = [];
                   cardsWithChecklists.forEach(card => {
-                    if (card.checklists && card.checklists.length > 0) {
+                    if(card.checklists && card.checklists.length > 0) {
                       card.checklists.forEach(checklist => {
-                        if (checklist.checkItems && checklist.checkItems.length > 0) {
+                        // Verificamos si checklist.checkItems existe y es un array
+                        if(checklist.checkItems && Array.isArray(checklist.checkItems) && checklist.checkItems.length > 0) {
                           checklist.checkItems.forEach(item => {
                             items.push({
                               checklist: checklist.name,
