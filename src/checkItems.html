@@ -1,174 +1,140 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="es">
   <head>
-    <meta charset="utf-8">
-    <title>Check Items</title>
+    <meta charset="UTF-8" />
+    <title>Lista de CheckItems</title>
+    <!-- Carga de React y ReactDOM -->
+    <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+    <!-- Babel para compilar JSX en el navegador -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Trello Power-Up -->
     <script src="https://p.trellocdn.com/power-up.min.js"></script>
     <style>
-      body { font-family: sans-serif; margin: 0.5em; }
-      #member-filters { margin-bottom: 1em; }
-      #member-filters img {
-        cursor: pointer;
-        border: 2px solid transparent;
-        border-radius: 50%;
-        margin-right: 4px;
-        width: 32px;
-        height: 32px;
-      }
-      #member-filters img.active { border-color: #0052cc; }
+      body { font-family: sans-serif; margin: 1em; }
       table { border-collapse: collapse; width: 100%; }
       th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-      th { cursor: pointer; background: #f0f0f0; }
+      th { background-color: #f0f0f0; cursor: pointer; }
     </style>
   </head>
   <body>
-    <div id="member-filters">
-      <!-- Aquí se agregarán los avatares de los miembros para filtrar -->
-    </div>
-    <table id="checkitems-table">
-      <thead>
-        <tr>
-          <th onclick="sortTable(0)">Checklist</th>
-          <th onclick="sortTable(1)">Name</th>
-          <th onclick="sortTable(2)">Due</th>
-          <th onclick="sortTable(3)">Assignee</th>
-          <th onclick="sortTable(4)">Card</th>
-          <th onclick="sortTable(5)">List</th>
-          <th onclick="sortTable(6)">Board</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Se llenará dinámicamente con datos reales -->
-      </tbody>
-    </table>
-    
-    <script>
-      // Función para ordenar la tabla
-      function sortTable(n) {
-        var table = document.getElementById("checkitems-table");
-        var rows, switching = true, i, x, y, shouldSwitch, dir = "asc", switchcount = 0;
-        while (switching) {
-          switching = false;
-          rows = table.rows;
-          for (i = 1; i < (rows.length - 1); i++) {
-            shouldSwitch = false;
-            x = rows[i].getElementsByTagName("TD")[n];
-            y = rows[i + 1].getElementsByTagName("TD")[n];
-            if (dir === "asc") {
-              if (x.textContent.toLowerCase() > y.textContent.toLowerCase()) {
-                shouldSwitch = true;
-                break;
-              }
-            } else {
-              if (x.textContent.toLowerCase() < y.textContent.toLowerCase()) {
-                shouldSwitch = true;
-                break;
-              }
-            }
-          }
-          if (shouldSwitch) {
-            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-            switching = true;
-            switchcount++;
-          } else {
-            if (switchcount === 0 && dir === "asc") {
-              dir = "desc";
-              switching = true;
-            }
-          }
-        }
-      }
-      
-      // Helper: dado el id de una lista y el array de listas, devuelve el nombre de la lista
-      function getListName(listId, lists) {
-        for (var i = 0; i < lists.length; i++) {
-          if (lists[i].id === listId) {
-            return lists[i].name;
-          }
-        }
-        return "";
-      }
-      
-      // Función para renderizar la tabla a partir del array de datos
-      function renderTable(data) {
-        var tbody = document.querySelector('#checkitems-table tbody');
-        tbody.innerHTML = "";
-        if(data.length === 0) {
-          var tr = document.createElement('tr');
-          var td = document.createElement('td');
-          td.colSpan = 7;
-          td.textContent = "No se encontraron checkitems.";
-          tr.appendChild(td);
-          tbody.appendChild(tr);
-          return;
-        }
-        data.forEach(function(item){
-          var tr = document.createElement('tr');
-          ['checklist','name','due','assignee','card','list','board'].forEach(function(key){
-             var td = document.createElement('td');
-             td.textContent = item[key];
-             tr.appendChild(td);
-          });
-          tbody.appendChild(tr);
-        });
-      }
-      
-      // Función principal para obtener los datos reales del board
-      TrelloPowerUp.render(function(t) {
-        // Obtenemos datos del board: cartas, listas y nombre
-        return t.board('cards', 'lists', 'name')
-          .then(function(boardData) {
-            console.log("Datos del Board:", boardData);
-            var cards = boardData.cards;
-            var lists = boardData.lists;
-            var boardName = boardData.name;
-            
-            // Para cada carta, obtenemos sus checklists
-            var checklistPromises = cards.map(function(card) {
-              var url = 'https://api.trello.com/1/cards/' + card.id + '/checklists';
-              return t.signRequest({ url: url })
-                .then(function(checklists) {
-                  console.log("Carta:", card.name, "Checklists:", checklists);
-                  card.checklists = checklists;
-                  return card;
-                })
-                .catch(function(error) {
-                  console.error("Error obteniendo checklists para la carta " + card.name, error);
-                  card.checklists = [];
-                  return card;
-                });
-            });
-            
-            return Promise.all(checklistPromises)
-              .then(function(cardsWithChecklists) {
-                var data = [];
-                cardsWithChecklists.forEach(function(card) {
-                  if(card.checklists && card.checklists.length > 0) {
-                    card.checklists.forEach(function(checklist) {
-                      if(checklist.checkItems && checklist.checkItems.length > 0) {
-                        checklist.checkItems.forEach(function(item) {
-                          data.push({
-                            checklist: checklist.name,
-                            name: item.name,
-                            due: item.due ? item.due : "",
-                            assignee: item.idMember ? item.idMember : "",
-                            card: card.name,
-                            list: getListName(card.idList, lists),
-                            board: boardName
-                          });
-                        });
-                      }
-                    });
-                  }
-                });
-                console.log("Datos extraídos:", data);
-                renderTable(data);
+    <div id="app"></div>
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+
+      const App = () => {
+        const [checkItemsData, setCheckItemsData] = useState([]);
+        const [loading, setLoading] = useState(true);
+
+        // Obtenemos el objeto t del Power-Up
+        const t = TrelloPowerUp.iframe();
+
+        // Helper: dada una lista de listas y un id, devuelve el nombre de la lista
+        const getListName = (listId, lists) => {
+          const found = lists.find(l => l.id === listId);
+          return found ? found.name : '';
+        };
+
+        useEffect(() => {
+          // Obtenemos datos del board: cartas, listas y nombre del board
+          t.board('cards', 'lists', 'name')
+            .then(boardData => {
+              const { cards, lists, name: boardName } = boardData;
+              console.log("Datos del Board:", boardData);
+              // Para cada carta, obtenemos sus checklists
+              const checklistPromises = cards.map(card => {
+                const url = `https://api.trello.com/1/cards/${card.id}/checklists`;
+                return t.signRequest({ url })
+                  .then(checklists => {
+                    console.log("Carta:", card.name, "Checklists:", checklists);
+                    return { ...card, checklists };
+                  })
+                  .catch(err => {
+                    console.error("Error obteniendo checklists para la carta", card.name, err);
+                    return { ...card, checklists: [] };
+                  });
               });
-          })
-          .catch(function(error) {
-            console.error("Error obteniendo datos del board:", error);
+              return Promise.all(checklistPromises)
+                .then(cardsWithChecklists => {
+                  let items = [];
+                  cardsWithChecklists.forEach(card => {
+                    if (card.checklists && card.checklists.length > 0) {
+                      card.checklists.forEach(checklist => {
+                        if (checklist.checkItems && checklist.checkItems.length > 0) {
+                          checklist.checkItems.forEach(item => {
+                            items.push({
+                              checklist: checklist.name,
+                              name: item.name,
+                              due: item.due ? item.due : "",
+                              assignee: item.idMember ? item.idMember : "",
+                              card: card.name,
+                              list: getListName(card.idList, lists),
+                              board: boardName
+                            });
+                          });
+                        }
+                      });
+                    }
+                  });
+                  console.log("CheckItems extraídos:", items);
+                  setCheckItemsData(items);
+                  setLoading(false);
+                });
+            })
+            .catch(err => {
+              console.error("Error obteniendo datos del board:", err);
+              setLoading(false);
+            });
+        }, []);
+
+        // Función para ordenar la tabla por una columna
+        const handleSort = (column) => {
+          const sortedData = [...checkItemsData].sort((a, b) => {
+            const aValue = a[column] ? a[column].toString().toLowerCase() : '';
+            const bValue = b[column] ? b[column].toString().toLowerCase() : '';
+            return aValue.localeCompare(bValue);
           });
-      });
+          setCheckItemsData(sortedData);
+        };
+
+        return (
+          <div>
+            <h1>Lista de CheckItems</h1>
+            {loading ? <p>Cargando datos...</p> : (
+              checkItemsData.length === 0 ? <p>No se encontraron checkitems.</p> : (
+                <table>
+                  <thead>
+                    <tr>
+                      <th onClick={() => handleSort('checklist')}>Checklist</th>
+                      <th onClick={() => handleSort('name')}>Name</th>
+                      <th onClick={() => handleSort('due')}>Due</th>
+                      <th onClick={() => handleSort('assignee')}>Assignee</th>
+                      <th onClick={() => handleSort('card')}>Card</th>
+                      <th onClick={() => handleSort('list')}>List</th>
+                      <th onClick={() => handleSort('board')}>Board</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {checkItemsData.map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.checklist}</td>
+                        <td>{item.name}</td>
+                        <td>{item.due}</td>
+                        <td>{item.assignee}</td>
+                        <td>{item.card}</td>
+                        <td>{item.list}</td>
+                        <td>{item.board}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )
+            )}
+          </div>
+        );
+      };
+
+      ReactDOM.render(<App />, document.getElementById('app'));
     </script>
   </body>
 </html>
