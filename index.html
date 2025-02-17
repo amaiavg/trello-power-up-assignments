@@ -3,7 +3,10 @@
   <head>
     <meta charset="utf-8">
     <title>Mi Power-Up de CheckItems</title>
+    <!-- Carga la librería de Trello Power-Up -->
     <script src="https://p.trellocdn.com/power-up.min.js"></script>
+    <!-- Nuestro código de inicialización -->
+    <script defer src="src/index.js"></script>
     <style>
       /* Estilos básicos para la tabla */
       table { border-collapse: collapse; width: 100%; }
@@ -16,27 +19,5 @@
     </style>
   </head>
   <body>
-    <div id="trello-root">
-      <!-- Aquí se insertará el contenido de nuestro power-up -->
-      <button id="showCheckItems">Ver Check Items</button>
-    </div>
-    <script>
-      // Inicializamos el power-up
-      TrelloPowerUp.initialize({
-        'board-buttons': function(t, options) {
-          return [{
-            icon: 'https://image.url/icon.png',
-            text: 'Check Items',
-            callback: function(t) {
-              return t.modal({
-                title: 'Check Items1',
-                url: 'https://amaiavg.github.io/trello-power-up-assignments/src/checkItems.html', // Esta es la página que generará la vista
-                fullscreen: true
-              });
-            }
-          }];
-        }
-      });
-    </script>
   </body>
 </html>
