@@ -80,12 +80,11 @@
 
         // Función para obtener los checklists de una tarjeta usando t.request
         const fetchChecklistsForCard = async (card) => {
+          // Construimos la URL con el query string en ella
           const url = `https://api.trello.com/1/cards/${card.id}/checklists?checkItem_fields=all`;
           try {
-            const checklists = await t.request({
-              url,
-              method: 'GET'
-            });
+            // Llamamos a t.request pasando solo la URL (esto hace una petición GET)
+            const checklists = await t.request(url);
             console.log("Carta:", card.name, "Checklists:", checklists);
             return { ...card, checklists };
           } catch (error) {
